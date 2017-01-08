@@ -5,6 +5,8 @@
 
 #define LEGS 4
 
+#define CLOSED 0
+#define OPEN 100
 
 volatile bool stopped = false;
 
@@ -25,6 +27,12 @@ volatile bool stopped = false;
 #define LEG3 legs[2]
 #define LEG4 legs[3]
 
+enum Position {
+	closed = 0,
+	middle = 50,
+    open = 100
+};
+
 const uint8_t leg1_pins[3] = LEG1PINS;
 const uint8_t leg2_pins[3] = LEG2PINS;
 const uint8_t leg3_pins[3] = LEG3PINS;
@@ -36,17 +44,16 @@ const int leg3_micros[3][3] = LEG3MICROS;
 const int leg4_micros[3][3] = LEG4MICROS;
 
 
-
 Leg* legs[LEGS] {new Leg(leg1_pins, leg1_micros), new Leg(leg2_pins, leg2_micros), new Leg(leg3_pins, leg3_micros), new Leg(leg4_pins, leg4_micros)};
 
 #define NUM_PATHS 6
 
 #define P1 {{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
-#define P2 {{180,0,0},{180,0,0},{180,0,0},{180,0,0}}
-#define P3 {{90,0,0},{90,0,0},{90,0,0},{90,0,0}}
-#define P4 {{0,0,0},{180,0,0},{0,0,0},{180,0,0}}
-#define P5 {{180,0,0},{0,0,0},{180,0,0},{0,0,0}}
-#define P6 {{90,0,0},{90,0,0},{90,0,0},{90,0,0}}
+#define P2 {{0,0,0},{100,0,0},{100,0,0},{100,0,0}}
+#define P3 {{50,0,0},{50,0,0},{50,0,0},{50,0,0}}
+#define P4 {{0,0,0},{100,0,0},{0,0,0},{100,0,0}}
+#define P5 {{100,0,0},{0,0,0},{100,0,0},{0,0,0}}
+#define P6 {{50,0,0},{50,0,0},{50,0,0},{50,0,0}}
 
 const uint8_t paths[NUM_PATHS][4][3] = {P1,P2,P3,P4,P5,P6};
 
@@ -59,6 +66,7 @@ void setup()
 {
 	Serial.begin(115200);
 
+	// initialize legs
 	for(int i=0; i < LEGS; i++) {
 		legs[i]->init();
 	}
@@ -66,43 +74,20 @@ void setup()
 	delay(100);
 
 	for(int i=0; i < LEGS; i++) {
-			//legs[i]->relax();
-		}
-
-	printStatus();
-	/*
-		Serial.println("#####");
-		Serial.println(leg1.joints[0]->_micros_closed);
-		Serial.println(leg1.joints[0]->_micros_open);
-		Serial.println(leg1.joints[0]->angle_to_micros(90));
-		Serial.println(leg1.joints[0]->_micros_target);
-		Serial.println(leg1.joints[0]->_step);
-	*/
-}
-
-void printStatus() {
-
-	Serial.println("---------------------------");
-	for(int i=0; i < LEGS; i++) {
-		Serial.print("Leg: ");
-		Serial.print(i);
-		Serial.print(" = ");
-		Serial.print(legs[i]->joints[0]->_micros);
-		Serial.print(", ");
-		Serial.print(legs[i]->joints[0]->_micros_target);
-		Serial.print(", ");
-		Serial.println(legs[i]->joints[0]->_step);
+		//legs[i]->relax();
 	}
 
+	printStatus();
 
 }
+
 // The loop function is called in an endless loop
 void loop()
 {
 	move(); //Add your repeated code here
 }
 
-void setPath() {
+void getNextPath() {
 	if(currentPath > (NUM_PATHS-1)) {
 		currentPath = 0;
 	}
@@ -114,24 +99,20 @@ void setPath() {
 	delay(500);
 	currentPath++;
 }
+
 void move() {
 	if(stopped) {
 		return;
 	}
 
 	if(targetsReached()) {
-			setPath();
+			getNextPath();
 		}
 
 	for(int i=0; i < LEGS; i++) {
 		legs[i]->move();
 		delay(5);
-		/*
-		if(!legs[i]->joints[0]->targetReached()) {
-			printStatus();
-		}*/
 	}
-
 
 }
 
@@ -142,4 +123,18 @@ bool targetsReached() {
 		}
 	}
 	return true;
+}
+
+void printStatus() {
+	Serial.println("---------------------------");
+	for(int i=0; i < LEGS; i++) {
+		Serial.print("Leg: ");
+		Serial.print(i);
+		Serial.print(" = ");
+		Serial.print(legs[i]->joints[0]->_micros);
+		Serial.print(", ");
+		Serial.print(legs[i]->joints[0]->_micros_target);
+		Serial.print(", ");
+		Serial.println(legs[i]->joints[0]->_step);
+	}
 }

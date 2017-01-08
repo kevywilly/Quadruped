@@ -8,15 +8,12 @@
 #ifndef JOINT_H_
 #define JOINT_H_
 
-#define OPEN 0
-#define CLOSED 1
-#define NEUTRAL 2
-
-#define POSITION_OPEN 100
-#define POSITION_CLOSED 0
+#define POS_OPEN 100
+#define POS_CLOSED 0
 
 #include "Arduino.h"
 #include <Servo.h>
+
 
 class Joint {
 public:
@@ -36,30 +33,30 @@ public:
 		//rest();
 	}
 
-
 	// Return a microseconds that correspond to an angle of the joint
 	int position_to_micros(uint8_t position) {
-		if(position < POSITION_CLOSED) {
-			return position_to_micros(POSITION_CLOSED);
+
+		if(position < POS_CLOSED) {
+			return position_to_micros(POS_CLOSED);
 		}
-		else if(position > POSITION_OPEN) {
-			return position_to_micros(POSITION_OPEN);
+		else if(position > POS_OPEN) {
+			return position_to_micros(POS_OPEN);
 		}
 
-		return map(position, POSITION_CLOSED, POSITION_OPEN, _micros_closed, _micros_open);
-
+		return map(position, POS_CLOSED, POS_OPEN, _micros_closed, _micros_open);
 	}
 
 	// Returns micros for a given position mapped to min/max of our joint
 	uint8_t micros_to_position(int micros) {
-		return map(micros, _micros_closed, _micros_open, POSITION_CLOSED, POSITION_OPEN);
+		return map(micros, _micros_closed, _micros_open, POS_CLOSED, POS_OPEN);
 	}
 
+	// Return current position (0 closed, 100 open)
 	uint8_t currentPosition() {
 		return micros_to_position(_micros);
 	}
 
-	// Release target angle
+	// Release target position
 	inline void clearTarget() {
 		_micros_target = _micros;
 		_step = 0;
@@ -67,26 +64,19 @@ public:
 		_stopped = true;
 	}
 
+	// Jump immediately to position basedon micros
 	void jumpToMicros(int micros) {
 		_servo->writeMicroseconds(micros);
 		_micros = micros;
 	}
 
+	// Jump immediately to neutral position
 	void jumpToNeutral() {
 		_micros_target = _micros_neutral;
 		jumpToMicros(_micros_neutral);
 	}
 
-	void jumpToClosed() {
-		_micros_target = _micros_closed;
-		jumpToMicros(_micros_closed);
-	}
-
-	void jumpToOpen() {
-		_micros_target = _micros_open;
-		jumpToMicros(_micros_open);
-	}
-
+	// Jump immediately to specific position
 	void jumpToPosition(uint8_t position) {
 		jumpToMicros(position_to_micros(position));
 	}

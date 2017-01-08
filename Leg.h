@@ -23,6 +23,7 @@ class Leg {
 
 public:
 
+	// Joints in each leg
 	Joint *joints[3];
 
 	// Construct leg and initialize the joints
@@ -49,13 +50,14 @@ public:
 
 	}
 
-	void moveJointTo(uint8_t joint, uint8_t angle, uint8_t speed) {
-		joints[joint]->setTarget(angle, speed);
+	void moveAllTo(uint8_t position, uint8_t speed) {
+		uint8_t positions[3] = {position,position,position};
+		moveTo(positions, speed);
 	}
 
-	void moveTo(const uint8_t angles[3], const uint8_t speed) {
+	void moveTo(const uint8_t positions[3], const uint8_t speed) {
 		for(int i=0; i < 4; i++) {
-			joints[i]->setTarget(angles[i], speed);
+			joints[i]->setTarget(positions[i], speed);
 		}
 	}
 
@@ -83,11 +85,6 @@ public:
 		}
 		return true;
 	}
-
-private:
-
-
-
 
 };
 
